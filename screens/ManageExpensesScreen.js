@@ -1,5 +1,13 @@
 import { useContext, useLayoutEffect } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import {
+  KeyboardAvoidingView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
+import ExpenseForm from "../components/ManageExpense/ExpenseForm";
 import Button from "../components/ui/Button";
 import IconButton from "../components/ui/IconButton";
 import { GlobalStyles } from "../constants/styles";
@@ -9,6 +17,10 @@ function ManageExpensesScreen({ route, navigation }) {
   const expenseContext = useContext(ExpenseContext);
   const editedExpenseId = route.params?.expenseId;
   const isEditing = !!editedExpenseId;
+
+  const selectedExpense = expenseContext.expenses.find(
+    (expense) => expense.id === editedExpenseId
+  );
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -25,44 +37,37 @@ function ManageExpensesScreen({ route, navigation }) {
     navigation.goBack();
   }
 
-  function confirmHandler() {
+  function confirmHandler(expenseData) {
     if (isEditing) {
-      expenseContext.updateExpense(editedExpenseId, {
-        description: "test!!!!",
-        amount: 109.95,
-        date: new Date("2022-07-17"),
-      });
+      expenseContext.updateExpense(editedExpenseId, expenseData);
     } else {
-      expenseContext.addExpense({
-        description: "test",
-        amount: 19.95,
-        date: new Date("2022-07-17"),
-      });
+      expenseContext.addExpense(expenseData);
     }
     navigation.goBack();
   }
 
   return (
     <View style={styles.container}>
-      <View style={styles.buttonContainer}>
-        <Button mode="flat" onPress={cancelHandler} style={styles.buttonStyle}>
-          Cancel
-        </Button>
-
-        <Button onPress={confirmHandler} style={styles.buttonStyle}>
-          {isEditing ? "Update" : "Add"}
-        </Button>
-      </View>
-      {isEditing && (
-        <View style={styles.deleteContainer}>
-          <IconButton
-            icon="trash"
-            color={GlobalStyles.colors.error500}
-            size={36}
-            onPress={deleteExpenseHandler}
+      <ScrollView>
+        <KeyboardAvoidingView style={styles.root} behavior="position">
+          <ExpenseForm
+            onCancel={cancelHandler}
+            onSubmit={confirmHandler}
+            submitButtonLabel={isEditing ? "Update" : "Add"}
+            defaultValues={selectedExpense}
           />
-        </View>
-      )}
+          {isEditing && (
+            <View style={styles.deleteContainer}>
+              <IconButton
+                icon="trash"
+                color={GlobalStyles.colors.error500}
+                size={36}
+                onPress={deleteExpenseHandler}
+              />
+            </View>
+          )}
+        </KeyboardAvoidingView>
+      </ScrollView>
     </View>
   );
 }
@@ -70,6 +75,9 @@ function ManageExpensesScreen({ route, navigation }) {
 export default ManageExpensesScreen;
 
 const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
   container: {
     flex: 1,
     padding: 24,
