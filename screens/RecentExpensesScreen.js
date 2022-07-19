@@ -1,11 +1,43 @@
-import { useContext } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Text } from "react-native";
 import ExpenseOutput from "../components/ExpenseOutput/ExpensesOutput";
+import ErrorOverlay from "../components/ui/ErrorOverlay";
+import LoadingOverlay from "../components/ui/LoadingOverlay";
 import { ExpenseContext } from "../store/expense-context";
 import { getDateMinusDate } from "../util/date";
+import { fetchExpenses } from "../util/http";
 
 function RecentExpensesScreen() {
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState();
   const expenseContext = useContext(ExpenseContext);
+
+  useEffect(() => {
+    async function getExpenses() {
+      setIsLoading(true);
+      try {
+        const expenses = await fetchExpenses();
+        expenseContext.setExpenses(expenses);
+      } catch (error) {
+        setError("Could not fetch expenses!");
+      }
+      setIsLoading(false);
+    }
+
+    getExpenses();
+  }, []);
+
+  function errorHandler() {
+    setError(null);
+  }
+
+  if (error && !isLoading) {
+    return <ErrorOverlay error={error} onConfirm={errorHandler} />;
+  }
+
+  if (isLoading) {
+    return <LoadingOverlay />;
+  }
 
   const recentExpenses = expenseContext.expenses.filter((expense) => {
     const today = new Date();
